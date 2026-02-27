@@ -1,6 +1,6 @@
 # foolhtml
 
-`foolhtml` is a simple Go utility that combines multiple files (HTML, images, text, etc.) into a single, portable HTML file. It uses a tabbed interface to switch between the included files and automatically inlines external resources (CSS, JavaScript, and images) for HTML content to ensure the output is self-contained.
+`foolhtml` is a simple Go utility that combines multiple files (HTML, images, text, etc.) into a single, portable HTML file. It uses a tabbed interface to switch between the included files and automatically inlines local resources (CSS, JavaScript, and images) for HTML content, while preserving remote links.
 
 ## Features
 

@@ -34,6 +34,7 @@ jobs:
           archive: false
           path: /tmp/output.html
       - uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
         env:
           ARTIFACT_URL: ${{ steps.upload-artifact.outputs.artifact-url }}
         with:

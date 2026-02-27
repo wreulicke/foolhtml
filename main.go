@@ -1,24 +1,26 @@
 package main
 
 import (
+	_ "embed"
+
 	"bytes"
 	"encoding/base64"
 	"fmt"
 	"html"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
-	"text/template"
-	"time"
 )
 
 // FileContent holds the name and escaped HTML content of a file.
 type FileContent struct {
-	Name        string
-	EscapedHTML string
+	Name       string
+	RawContent string
+	JSSafeHTML string
 }
 
 // Data for the HTML template
@@ -26,92 +28,8 @@ type TemplateData struct {
 	Files []FileContent
 }
 
-const mainTemplate = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Combined Files</title>
-    <style>
-        body { font-family: sans-serif; margin: 0; padding: 0; }
-        .tabs {
-            overflow: hidden;
-            border-bottom: 1px solid #ccc;
-            background-color: #f1f1f1;
-        }
-        .tabs button {
-            background-color: inherit;
-            float: left;
-            border: none;
-            outline: none;
-            cursor: pointer;
-            padding: 14px 16px;
-            transition: 0.3s;
-            font-size: 17px;
-        }
-        .tabs button:hover {
-            background-color: #ddd;
-        }
-        .tabs button.active {
-            background-color: #ccc;
-        }
-        .iframe-container {
-            display: none;
-            height: calc(100vh - 50px); /* Adjust based on tab height */
-            width: 100%;
-        }
-        .iframe-container.active {
-            display: block;
-        }
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="tabs">
-        {{range $index, $file := .Files}}
-            <button class="tablinks" onclick="openTab(event, 'tab-{{$index}}')">{{$file.Name}}</button>
-        {{end}}
-    </div>
-
-    {{range $index, $file := .Files}}
-        <div id="tab-{{$index}}" class="iframe-container">
-            <iframe srcdoc="{{$file.EscapedHTML}}" sandbox="allow-scripts allow-same-origin"></iframe>
-        </div>
-    {{end}}
-
-    <script>
-        function openTab(evt, tabId) {
-            var i, iframeContainers, tablinks;
-
-            iframeContainers = document.getElementsByClassName("iframe-container");
-            for (i = 0; i < iframeContainers.length; i++) {
-                iframeContainers[i].style.display = "none";
-                iframeContainers[i].classList.remove("active");
-            }
-
-            tablinks = document.getElementsByClassName("tablinks");
-            for (i = 0; i < tablinks.length; i++) {
-                tablinks[i].classList.remove("active");
-            }
-
-            document.getElementById(tabId).style.display = "block";
-            document.getElementById(tabId).classList.add("active");
-            evt.currentTarget.classList.add("active");
-        }
-
-        // Open the first tab by default
-        document.addEventListener("DOMContentLoaded", function() {
-            document.querySelector(".tablinks").click();
-        });
-    </script>
-
-</body>
-</html>`
+//go:embed template.html.tpl
+var mainTemplate string
 
 // linkRegex matches <link rel="stylesheet" href="...">
 var linkRegex = regexp.MustCompile(`(?i)<link[^>]+rel=["']stylesheet["'][^>]+href=["']([^"']+)["'][^>]*>`)
@@ -121,10 +39,6 @@ var scriptRegex = regexp.MustCompile(`(?i)<script[^>]+src=["']([^"']+)["'][^>]*>
 
 // imgRegex matches <img src="...">
 var imgRegex = regexp.MustCompile(`(?i)<img[^>]+src=["']([^"']+)["'][^>]*>`)
-
-var httpClient = &http.Client{
-	Timeout: 10 * time.Second,
-}
 
 func isRemote(s string) bool {
 	return strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://") || strings.HasPrefix(s, "//")
@@ -212,9 +126,31 @@ func main() {
 	outputFileName := os.Args[1]
 	inputFileNames := os.Args[2:]
 
+	// Determine the common root directory to create relative paths for the tree
+	var commonRoot string
+
+	absPath, err := filepath.Abs(inputFileNames[0])
+	if err != nil {
+		log.Fatalf("Failed to get absolute path: %v", err)
+	}
+	commonRoot = filepath.Dir(absPath)
+
+	for _, name := range inputFileNames[1:] {
+		absPath, err := filepath.Abs(name)
+		if err != nil {
+			log.Fatalf("Failed to get absolute path: %v", err)
+		}
+		dir := filepath.Dir(absPath)
+		for !strings.HasPrefix(commonRoot, dir) && commonRoot != "." && commonRoot != "/" {
+			commonRoot = filepath.Dir(commonRoot)
+			if commonRoot == dir {
+				break
+			}
+		}
+	}
+
 	var files []FileContent
 	var targetFiles []string
-
 	for _, name := range inputFileNames {
 		info, err := os.Stat(name)
 		if err != nil {
@@ -228,7 +164,11 @@ func main() {
 					return err
 				}
 				if !d.IsDir() && !strings.HasPrefix(d.Name(), ".") {
-					targetFiles = append(targetFiles, path)
+					absPath, err := filepath.Abs(path)
+					if err != nil {
+						return fmt.Errorf("cannot resolve absolute path: %w", err)
+					}
+					targetFiles = append(targetFiles, absPath)
 				}
 				return nil
 			})
@@ -255,18 +195,22 @@ func main() {
 			processedContent = inlineResources(inputFileName, string(contentBytes))
 		} else if strings.HasPrefix(contentType, "image/") {
 			base64Content := base64.StdEncoding.EncodeToString(contentBytes)
-			processedContent = fmt.Sprintf("<!DOCTYPE html><html><body style=\"margin:0;display:flex;justify-content:center;align-items:center;height:100vh;background:#f0f0f0;\"><img src=\"data:%s;base64,%s\" style=\"max-width:100%%;max-height:100%%;object-fit:contain;\"></body></html>", contentType, base64Content)
+			processedContent = fmt.Sprintf(`<!DOCTYPE html><html><body style="margin:0;display:flex;justify-content:center;align-items:center;height:100vh;background:#f0f0f0;"><img src="data:%s;base64,%s" style="max-width:100%%;max-height:100%%;object-fit:contain;"></body></html>`, contentType, base64Content)
 		} else {
 			// Treat as plain text and wrap in <pre>
-			processedContent = fmt.Sprintf("<!DOCTYPE html><html><head><meta charset=\"UTF-8\"></head><body style=\"margin:0;padding:10px;\"><pre style=\"white-space: pre-wrap; word-wrap: break-word; font-family: monospace;\">%s</pre></body></html>", html.EscapeString(string(contentBytes)))
+			processedContent = fmt.Sprintf(`<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:10px;"><pre style="white-space: pre-wrap; word-wrap: break-word; font-family: monospace;">%s</pre></body></html>`, html.EscapeString(string(contentBytes)))
 		}
 
 		// Escape for srcdoc
-		escapedContent := html.EscapeString(processedContent)
+		relPath, err := filepath.Rel(commonRoot, inputFileName)
+		if err != nil {
+			log.Printf("Warning: could not find relative path for %s: %v", inputFileName, err)
+			relPath = filepath.Base(inputFileName)
+		}
 
 		files = append(files, FileContent{
-			Name:        filepath.Base(inputFileName),
-			EscapedHTML: escapedContent,
+			Name:       relPath,
+			RawContent: processedContent,
 		})
 	}
 

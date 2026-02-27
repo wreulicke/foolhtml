@@ -2,6 +2,8 @@ version: "2"
 linters:
   default: all
   disable:
+    - err113
+    - funlen
     - cyclop
     - depguard
     - exhaustruct
@@ -18,6 +20,7 @@ linters:
     - testpackage
     - varnamelen
     - wsl
+    - wsl_v5
   settings:
     revive:
       rules:
@@ -42,9 +45,15 @@ linters:
 formatters:
   enable:
     - gci
-    - gofmt
     - gofumpt
-    - goimports
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - localmodule
+    gofumpt:
+      extra-rules: true
   exclusions:
     generated: lax
     paths:

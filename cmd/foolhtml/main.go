@@ -1,11 +1,11 @@
 package main
 
 import (
-	_ "embed"
-
 	"bytes"
 	"debug/buildinfo"
+	_ "embed"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"html"
 	"html/template"
@@ -56,7 +56,7 @@ type FileContent struct {
 	JSSafeHTML string
 }
 
-// Data for the HTML template
+// TemplateData for the HTML template.
 type TemplateData struct {
 	Files []FileContent
 }
@@ -64,20 +64,20 @@ type TemplateData struct {
 //go:embed template.html.tpl
 var mainTemplate string
 
-// linkRegex matches <link rel="stylesheet" href="...">
+// linkRegex matches <link rel="stylesheet" href="...">.
 var linkRegex = regexp.MustCompile(`(?i)<link[^>]+rel=["']stylesheet["'][^>]+href=["']([^"']+)["'][^>]*>`)
 
-// scriptRegex matches <script src="..."></script>
+// scriptRegex matches <script src="..."></script>.
 var scriptRegex = regexp.MustCompile(`(?i)<script[^>]+src=["']([^"']+)["'][^>]*>\s*</script>`)
 
-// imgRegex matches <img src="...">
+// imgRegex matches <img src="...">.
 var imgRegex = regexp.MustCompile(`(?i)<img[^>]+src=["']([^"']+)["'][^>]*>`)
 
 func isRemote(s string) bool {
 	return strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://") || strings.HasPrefix(s, "//")
 }
 
-func inlineResources(htmlPath string, content string) string {
+func inlineResources(htmlPath, content string) string {
 	baseDir := filepath.Dir(htmlPath)
 
 	// 1. Inline CSS
@@ -86,10 +86,12 @@ func inlineResources(htmlPath string, content string) string {
 		if len(submatch) < 2 {
 			return match
 		}
+
 		href := submatch[1]
 		if isRemote(href) {
 			return match
 		}
+
 		target := filepath.Join(baseDir, href)
 
 		resContent, err := os.ReadFile(target)
@@ -97,6 +99,7 @@ func inlineResources(htmlPath string, content string) string {
 			log.Printf("Warning: Failed to fetch CSS resource %s: %v\n", target, err)
 			return match
 		}
+
 		return fmt.Sprintf("<style>%s</style>", string(resContent))
 	})
 
@@ -106,10 +109,12 @@ func inlineResources(htmlPath string, content string) string {
 		if len(submatch) < 2 {
 			return match
 		}
+
 		src := submatch[1]
 		if isRemote(src) {
 			return match
 		}
+
 		target := filepath.Join(baseDir, src)
 
 		resContent, err := os.ReadFile(target)
@@ -117,16 +122,19 @@ func inlineResources(htmlPath string, content string) string {
 			log.Printf("Warning: Failed to fetch JS resource %s: %v\n", target, err)
 			return match
 		}
+
 		return fmt.Sprintf("<script>%s</script>", string(resContent))
 	})
 
 	// 3. Inline Images
 	content = imgRegex.ReplaceAllStringFunc(content, func(match string) string {
 		srcRegex := regexp.MustCompile(`(?i)src=["']([^"']+)["']`)
+
 		submatch := srcRegex.FindStringSubmatch(match)
 		if len(submatch) < 2 {
 			return match
 		}
+
 		src := submatch[1]
 		if strings.HasPrefix(src, "data:") || isRemote(src) {
 			return match
@@ -152,7 +160,7 @@ func inlineResources(htmlPath string, content string) string {
 
 func run(args []string) error {
 	if len(args) < 2 {
-		return fmt.Errorf("expect 2 args or higher")
+		return errors.New("expect 2 args or higher")
 	}
 
 	outputFileName := args[0]
@@ -163,15 +171,17 @@ func run(args []string) error {
 
 	absPath, err := filepath.Abs(inputFileNames[0])
 	if err != nil {
-		return fmt.Errorf("Failed to get absolute path: %v", err)
+		return fmt.Errorf("failed to get absolute path: %w", err)
 	}
+
 	commonRoot = filepath.Dir(absPath)
 
 	for _, name := range inputFileNames[1:] {
 		absPath, err := filepath.Abs(name)
 		if err != nil {
-			return fmt.Errorf("Failed to get absolute path: %w", err)
+			return fmt.Errorf("failed to get absolute path: %w", err)
 		}
+
 		dir := filepath.Dir(absPath)
 		for !strings.HasPrefix(commonRoot, dir) && commonRoot != "." && commonRoot != "/" {
 			commonRoot = filepath.Dir(commonRoot)
@@ -181,52 +191,61 @@ func run(args []string) error {
 		}
 	}
 
-	var files []FileContent
-	var targetFiles []string
+	var (
+		files       []FileContent
+		targetFiles []string
+	)
+
 	for _, name := range inputFileNames {
 		info, err := os.Stat(name)
 		if err != nil {
-			return fmt.Errorf("Error stating %s: %v\n", name, err)
+			return fmt.Errorf("error stating %s: %w", name, err)
 		}
 
-		if info.IsDir() {
-			err := filepath.WalkDir(name, func(path string, d os.DirEntry, err error) error {
-				if err != nil {
-					return err
-				}
-				if !d.IsDir() && !strings.HasPrefix(d.Name(), ".") {
-					absPath, err := filepath.Abs(path)
-					if err != nil {
-						return fmt.Errorf("cannot resolve absolute path: %w", err)
-					}
-					targetFiles = append(targetFiles, absPath)
-				}
-				return nil
-			})
-			if err != nil {
-				return fmt.Errorf("Error walking directory %s: %v\n", name, err)
-			}
-		} else {
+		if !info.IsDir() {
 			targetFiles = append(targetFiles, name)
+			continue
+		}
+
+		err = filepath.WalkDir(name, func(path string, d os.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if !d.IsDir() && !strings.HasPrefix(d.Name(), ".") {
+				absPath, err := filepath.Abs(path)
+				if err != nil {
+					return fmt.Errorf("cannot resolve absolute path: %w", err)
+				}
+
+				targetFiles = append(targetFiles, absPath)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("error walking directory %s: %w", name, err)
 		}
 	}
 
 	for _, inputFileName := range targetFiles {
 		contentBytes, err := os.ReadFile(inputFileName)
 		if err != nil {
-			return fmt.Errorf("Error reading file %s: %w", inputFileName, err)
+			return fmt.Errorf("error reading file %s: %w", inputFileName, err)
 		}
 
 		contentType := http.DetectContentType(contentBytes)
+
 		var processedContent string
 
 		// Determine how to process the file based on its type
-		if strings.HasPrefix(contentType, "text/html") || strings.ToLower(filepath.Ext(inputFileName)) == ".html" {
+		switch {
+		case strings.HasPrefix(contentType, "text/html") || strings.ToLower(filepath.Ext(inputFileName)) == ".html":
 			processedContent = inlineResources(inputFileName, string(contentBytes))
-		} else if strings.HasPrefix(contentType, "image/") {
+		case strings.HasPrefix(contentType, "image/"):
 			base64Content := base64.StdEncoding.EncodeToString(contentBytes)
 			processedContent = fmt.Sprintf(`<!DOCTYPE html><html><body style="margin:0;display:flex;justify-content:center;align-items:center;height:100vh;background:#f0f0f0;"><img src="data:%s;base64,%s" style="max-width:100%%;max-height:100%%;object-fit:contain;"></body></html>`, contentType, base64Content)
-		} else {
+		default:
 			// Treat as plain text and wrap in <pre>
 			processedContent = fmt.Sprintf(`<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;padding:10px;"><pre style="white-space: pre-wrap; word-wrap: break-word; font-family: monospace;">%s</pre></body></html>`, html.EscapeString(string(contentBytes)))
 		}
@@ -242,9 +261,8 @@ func run(args []string) error {
 			RawContent: processedContent,
 		})
 	}
-
 	if len(files) == 0 {
-		return fmt.Errorf("No valid input files processed.")
+		return errors.New("no valid input files processed")
 	}
 
 	data := TemplateData{
@@ -253,21 +271,23 @@ func run(args []string) error {
 
 	tmpl, err := template.New("main").Parse(mainTemplate)
 	if err != nil {
-		return fmt.Errorf("Error parsing template: %w", err)
+		return fmt.Errorf("error parsing template: %w", err)
 	}
 
 	var renderedHTML bytes.Buffer
+
 	err = tmpl.Execute(&renderedHTML, data)
 	if err != nil {
-		return fmt.Errorf("Error executing template: %w", err)
+		return fmt.Errorf("error executing template: %w", err)
 	}
 
-	err = os.WriteFile(outputFileName, renderedHTML.Bytes(), 0644)
+	err = os.WriteFile(outputFileName, renderedHTML.Bytes(), 0o644) //nolint:gosec
 	if err != nil {
-		return fmt.Errorf("Error writing output file %s: %w", outputFileName, err)
+		return fmt.Errorf("error writing output file %s: %w", outputFileName, err)
 	}
 
-	fmt.Printf("Successfully combined %d files into %s\n", len(files), outputFileName)
+	log.Printf("Successfully combined %d files into %s\n", len(files), outputFileName)
+
 	return nil
 }
 

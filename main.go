@@ -32,7 +32,7 @@ const mainTemplate = `<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Combined HTML Files</title>
+    <title>Combined Files</title>
     <style>
         body { font-family: sans-serif; margin: 0; padding: 0; }
         .tabs {
@@ -227,7 +227,7 @@ func inlineResources(htmlPath string, content string) string {
 
 func main() {
 	if len(os.Args) < 3 {
-		fmt.Printf("Usage: %s <output_file.html> <input_file1.html> [input_file2.html...]\n", os.Args[0])
+		fmt.Printf("Usage: %s <output_file.html> <input_path1> [input_path2...]\n", os.Args[0])
 		os.Exit(1)
 	}
 

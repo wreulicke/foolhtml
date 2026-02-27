@@ -1,6 +1,6 @@
 # foolhtml
 
-`foolhtml` is a simple Go utility that combines multiple HTML files into a single, portable HTML file. It uses a tabbed interface to switch between the included files and automatically inlines external resources (CSS, JavaScript, and images) to ensure the output is self-contained.
+`foolhtml` is a simple Go utility that combines multiple files (HTML, images, text, etc.) into a single, portable HTML file. It uses a tabbed interface to switch between the included files and automatically inlines external resources (CSS, JavaScript, and images) for HTML content to ensure the output is self-contained.
 
 ## Features
 
@@ -10,7 +10,7 @@
   - **Images:** Automatically converts to Base64 and displays them.
   - **Text/Code:** Wraps non-HTML files (like JS, CSS, or logs) in `<pre>` tags for easy viewing.
 - **Tabbed Interface:** Combines everything into one file with clean tab-based navigation.
-- **Resource Inlining:** Automatically fetches and inlines:
+- **Resource Inlining:** For HTML files, it automatically fetches and inlines:
   - External CSS via `<link rel="stylesheet">`
   - External JavaScript via `<script src="...">`
   - Images via `<img src="...">` (converted to Base64 data URLs)
@@ -27,20 +27,20 @@ go build -o foolhtml main.go
 ## Usage
 
 ```bash
-./foolhtml <output_file.html> <input_file1.html> [input_file2.html...]
+./foolhtml <output_file.html> <input_path1> [input_path2...]
 ```
 
 ### Example
 
 ```bash
-./foolhtml examples/output.html test_files/file1.html test_files/file2.html
+./foolhtml examples/output.html test_files/
 ```
 
-This will create `examples/output.html` containing the content of the two input files, with each accessible via a tab.
+This will create `examples/output.html` containing all files found in `test_files/`, with each accessible via a tab.
 
 ## Security Considerations
 
-**Important:** This tool is intended for merging trusted HTML files. Be aware of the following:
+**Important:** This tool is intended for merging trusted files. Be aware of the following:
 
 - **Path Traversal:** The tool currently does not strictly validate paths for local resources, which could lead to arbitrary file inclusion if processing untrusted input.
 - **SSRF (Server-Side Request Forgery):** It fetches remote resources (http/https) defined in the input HTML. Running this on untrusted files could allow an attacker to make requests to internal services.

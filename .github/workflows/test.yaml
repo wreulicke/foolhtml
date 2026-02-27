@@ -28,6 +28,7 @@ jobs:
           go run ./cmd/foolhtml /tmp/output.html build/reports
       - uses: actions/upload-artifact@v7
         if: success() || failure()
+        id: upload-artifact
         with:
           name: foolhtml
           archive: false

@@ -11,9 +11,10 @@ build/gotestsum:
 # if you want to update snapshot, run `make test ARG=-update`
 .PHONY: test
 test: build/gotestsum
-	mkdir -p build
-	build/gotestsum \
+	mkdir -p build/reports
+		build/gotestsum \
+		--post-run-command "go tool cover -html=build/reports/coverage.out -o build/reports/coverage.html" \
 		--format standard-verbose \
-		--jsonfile build/reports.json \
-		--junitfile build/reports.xml \
-		--  ./... -race -coverprofile=build/coverage.out ${ARG}
+		--jsonfile build/reports/test-reports.json \
+		--junitfile build/reports/test-reports.xml \
+		--  ./... -race -coverprofile=build/reports/coverage.out ${ARG}

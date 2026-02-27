@@ -33,18 +33,18 @@ jobs:
           archive: false
           path: /tmp/output.html
       - uses: actions/github-script@v6
-      - env:
-        ARTIFACT_URL: ${{ steps.upload-artifact.outputs.artifact-url }}
-      - with:
-        script: |
-          const artifactUrl = process.env.ARTIFACT_URL;
-          const commentBody = `You can see [ci-reports](${artifactUrl}) here.`;
-          await github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: commentBody,
-          });
+        env:
+          ARTIFACT_URL: ${{ steps.upload-artifact.outputs.artifact-url }}
+        with:
+          script: |
+            const artifactUrl = process.env.ARTIFACT_URL;
+            const commentBody = `You can see [ci-reports](${artifactUrl}) here.`;
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody,
+            });
 
       - name: Test Report Summary
         if: success() || failure()

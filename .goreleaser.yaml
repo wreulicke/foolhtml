@@ -1,3 +1,4 @@
+version: 2
 builds:
   - main: ./cmd/foolhtml
     binary: foolhtml
@@ -15,9 +16,9 @@ builds:
 checksum:
   name_template: checksums.txt
 archives:
-  - format: binary
+  - formats: [binary]
 snapshot:
-  name_template: master
+  version_template: master
 changelog:
   sort: asc
   filters:

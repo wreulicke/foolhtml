@@ -91,17 +91,9 @@
     </div>
     <script>
         const files = [
-            
-            { path: "testdata\/file1.html", html: "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n    \u003ctitle\u003eFile 1 (Gopher PNG Test)\u003c\/title\u003e\n    \u003clink rel=\u0022stylesheet\u0022 href=\u0022https:\/\/cdnjs.cloudflare.com\/ajax\/libs\/mocha\/10.2.0\/mocha.min.css\u0022\u003e\n    \u003cstyle\u003ebody {\n    background-color: #ffe0e0;\n    border: 5px solid red;\n}\nh1 {\n    text-shadow: 2px 2px #ccc;\n}\u003c\/style\u003e\n\u003c\/head\u003e\n\u003cbody\u003e\n    \u003ch1\u003eThis is File 1 with a PNG Gopher!\u003c\/h1\u003e\n    \u003cp\u003eContent of the first HTML file.\u003c\/p\u003e\n    \u003cimg src=\u0022https:\/\/go.dev\/images\/favicon-gopher-plain.png\u0022 alt=\u0022Go Gopher PNG\u0022\u003e\n    \u003cscript\u003econsole.log(\u0022Inlined script is running!\u0022);\ndocument.addEventListener(\u0022DOMContentLoaded\u0022, function() {\n    const p = document.createElement(\u0022p\u0022);\n    p.textContent = \u0022This paragraph was added by an inlined script.\u0022;\n    p.style.fontWeight = \u0022bold\u0022;\n    document.body.appendChild(p);\n});\u003c\/script\u003e\n\u003c\/body\u003e\n\u003c\/html\u003e" },
-            
-            { path: "testdata\/file2.html", html: "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n    \u003ctitle\u003eFile 2\u003c\/title\u003e\n    \u003cstyle\u003e\n        body { font-family: serif; background-color: #e0e0e0; padding: 20px; }\n        h1 { color: #007bff; }\n        p { color: #555; }\n    \u003c\/style\u003e\n\u003c\/head\u003e\n\u003cbody\u003e\n    \u003ch1\u003eThis is File 2 with a PNG Gopher!\u003c\/h1\u003e\n    \u003cp\u003eContent of the second HTML file.\u003c\/p\u003e\n    \u003cimg src=\u0022https:\/\/go.dev\/images\/favicon-gopher-plain.png\u0022 alt=\u0022Go Gopher PNG\u0022\u003e\n\u003c\/body\u003e\n\u003c\/html\u003e" },
-            
-            { path: "testdata\/nested\/test.txt", html: "\u003c!DOCTYPE html\u003e\u003chtml\u003e\u003chead\u003e\u003cmeta charset=\u0022UTF-8\u0022\u003e\u003c\/head\u003e\u003cbody style=\u0022margin:0;padding:10px;\u0022\u003e\u003cpre style=\u0022white-space: pre-wrap; word-wrap: break-word; font-family: monospace;\u0022\u003etest\u003c\/pre\u003e\u003c\/body\u003e\u003c\/html\u003e" },
-            
-            { path: "testdata\/script.js", html: "\u003c!DOCTYPE html\u003e\u003chtml\u003e\u003chead\u003e\u003cmeta charset=\u0022UTF-8\u0022\u003e\u003c\/head\u003e\u003cbody style=\u0022margin:0;padding:10px;\u0022\u003e\u003cpre style=\u0022white-space: pre-wrap; word-wrap: break-word; font-family: monospace;\u0022\u003econsole.log(\u0026#34;Inlined script is running!\u0026#34;);\ndocument.addEventListener(\u0026#34;DOMContentLoaded\u0026#34;, function() {\n    const p = document.createElement(\u0026#34;p\u0026#34;);\n    p.textContent = \u0026#34;This paragraph was added by an inlined script.\u0026#34;;\n    p.style.fontWeight = \u0026#34;bold\u0026#34;;\n    document.body.appendChild(p);\n});\u003c\/pre\u003e\u003c\/body\u003e\u003c\/html\u003e" },
-            
-            { path: "testdata\/style.css", html: "\u003c!DOCTYPE html\u003e\u003chtml\u003e\u003chead\u003e\u003cmeta charset=\u0022UTF-8\u0022\u003e\u003c\/head\u003e\u003cbody style=\u0022margin:0;padding:10px;\u0022\u003e\u003cpre style=\u0022white-space: pre-wrap; word-wrap: break-word; font-family: monospace;\u0022\u003ebody {\n    background-color: #ffe0e0;\n    border: 5px solid red;\n}\nh1 {\n    text-shadow: 2px 2px #ccc;\n}\u003c\/pre\u003e\u003c\/body\u003e\u003c\/html\u003e" },
-            
+            {{range $i, $f := .Files}}
+            { path: "{{$f.Name}}", html: "{{$f.RawContent}}" },
+            {{end}}
         ];
 
         const EXT_ICONS = {
@@ -210,7 +202,7 @@
         const treeEl = document.getElementById('file-tree');
         treeEl.appendChild(renderNode(buildTree(files), 0));
 
-        
+        // Select first file by default
         const first = treeEl.querySelector('.tree-row:not(.open)');
         if (first) first.click();
     </script>

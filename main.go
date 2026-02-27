@@ -1,6 +1,8 @@
 package main
 
 import (
+	_ "embed"
+
 	"bytes"
 	"encoding/base64"
 	"fmt"
@@ -26,112 +28,8 @@ type TemplateData struct {
 	Files []FileContent
 }
 
-const mainTemplate = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Combined Files</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            margin: 0;
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-        #file-tree {
-            width: 250px;
-            border-right: 1px solid #ccc;
-            padding: 10px;
-            overflow-y: auto;
-            background-color: #f7f7f7;
-        }
-        #file-tree ul {
-            list-style: none;
-            padding-left: 15px;
-            margin: 0;
-        }
-        #file-tree li {
-            padding: 4px 0;
-        }
-        #file-tree a {
-            text-decoration: none;
-            color: #333;
-            cursor: pointer;
-            display: block;
-            padding: 2px 5px;
-            border-radius: 3px;
-        }
-        #file-tree a:hover {
-            background-color: #e0e0e0;
-        }
-        #file-tree a.active {
-            background-color: #007bff;
-            color: white;
-        }
-        #content-viewer {
-            flex-grow: 1;
-            display: flex;
-        }
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-    </style>
-</head>
-<body>
-    <div id="file-tree">
-        <ul>
-            {{range $index, $file := .Files}}
-                <li><a href="#" data-index="{{$index}}">{{$file.Name}}</a></li>
-            {{end}}
-        </ul>
-    </div>
-    <div id="content-viewer">
-        <iframe id="content-frame" sandbox="allow-scripts allow-same-origin"></iframe>
-    </div>
-
-    <script>
-		const files = [
-			{{range .Files}}
-			{
-				escapedHtml: "{{.RawContent}}",
-			},
-			{{end}}
-		];
-
-        document.addEventListener("DOMContentLoaded", function() {
-            const fileLinks = document.querySelectorAll("#file-tree a");
-            const contentFrame = document.getElementById("content-frame");
-			let activeLink = null;
-
-            fileLinks.forEach(link => {
-                link.addEventListener("click", function(e) {
-                    e.preventDefault();
-
-					if (activeLink) {
-						activeLink.classList.remove("active");
-					}
-					this.classList.add("active");
-					activeLink = this;
-
-                    const index = parseInt(this.getAttribute("data-index"), 10);
-					if (index >= 0 && index < files.length) {
-						contentFrame.srcdoc = files[index].escapedHtml;
-					}
-                });
-            });
-
-            // Open the first file by default
-            if (fileLinks.length > 0) {
-                fileLinks[0].click();
-            }
-        });
-    </script>
-</body>
-</html>`
+//go:embed template.html.tpl
+var mainTemplate string
 
 // linkRegex matches <link rel="stylesheet" href="...">
 var linkRegex = regexp.MustCompile(`(?i)<link[^>]+rel=["']stylesheet["'][^>]+href=["']([^"']+)["'][^>]*>`)

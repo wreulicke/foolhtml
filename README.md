@@ -10,10 +10,11 @@
   - **Images:** Automatically converts to Base64 and displays them.
   - **Text/Code:** Wraps non-HTML files (like JS, CSS, or logs) in `<pre>` tags for easy viewing.
 - **Tabbed Interface:** Combines everything into one file with clean tab-based navigation.
-- **Resource Inlining:** For HTML files, it automatically fetches and inlines:
-  - External CSS via `<link rel="stylesheet">`
-  - External JavaScript via `<script src="...">`
-  - Images via `<img src="...">` (converted to Base64 data URLs)
+- **Resource Inlining:** For HTML files, it automatically fetches and inlines **local** resources:
+  - Local CSS via `<link rel="stylesheet">`
+  - Local JavaScript via `<script src="...">`
+  - Local Images via `<img src="...">` (converted to Base64 data URLs)
+  - *Note: Remote resources (starting with `http://`, `https://`, or `//`) are not inlined and remain as external links.*
 - **Isolated Execution:** Uses `<iframe>` with the `sandbox` attribute to display content, providing a layer of isolation.
 
 ## Installation
@@ -43,7 +44,6 @@ This will create `examples/output.html` containing all files found in `test_file
 **Important:** This tool is intended for merging trusted files. Be aware of the following:
 
 - **Path Traversal:** The tool currently does not strictly validate paths for local resources, which could lead to arbitrary file inclusion if processing untrusted input.
-- **SSRF (Server-Side Request Forgery):** It fetches remote resources (http/https) defined in the input HTML. Running this on untrusted files could allow an attacker to make requests to internal services.
 - **Resource Limits:** There are no limits on the size of resources fetched, which could lead to high memory usage (DoS) with malicious inputs.
 - **Iframe Sandbox:** Content is rendered in an iframe with `sandbox="allow-scripts allow-same-origin"`. While this provides some isolation, scripts in the input files will still execute.
 

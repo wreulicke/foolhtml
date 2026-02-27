@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"html"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -131,24 +130,6 @@ func isRemote(s string) bool {
 	return strings.HasPrefix(s, "http://") || strings.HasPrefix(s, "https://") || strings.HasPrefix(s, "//")
 }
 
-func fetchResource(target string) ([]byte, error) {
-	if strings.HasPrefix(target, "//") {
-		target = "https:" + target
-	}
-	if strings.HasPrefix(target, "http://") || strings.HasPrefix(target, "https://") {
-		resp, err := httpClient.Get(target)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("bad status: %s", resp.Status)
-		}
-		return io.ReadAll(resp.Body)
-	}
-	return os.ReadFile(target)
-}
-
 func inlineResources(htmlPath string, content string) string {
 	baseDir := filepath.Dir(htmlPath)
 
@@ -159,12 +140,12 @@ func inlineResources(htmlPath string, content string) string {
 			return match
 		}
 		href := submatch[1]
-		target := href
-		if !isRemote(href) {
-			target = filepath.Join(baseDir, href)
+		if isRemote(href) {
+			return match
 		}
+		target := filepath.Join(baseDir, href)
 
-		resContent, err := fetchResource(target)
+		resContent, err := os.ReadFile(target)
 		if err != nil {
 			log.Printf("Warning: Failed to fetch CSS resource %s: %v\n", target, err)
 			return match
@@ -179,12 +160,12 @@ func inlineResources(htmlPath string, content string) string {
 			return match
 		}
 		src := submatch[1]
-		target := src
-		if !isRemote(src) {
-			target = filepath.Join(baseDir, src)
+		if isRemote(src) {
+			return match
 		}
+		target := filepath.Join(baseDir, src)
 
-		resContent, err := fetchResource(target)
+		resContent, err := os.ReadFile(target)
 		if err != nil {
 			log.Printf("Warning: Failed to fetch JS resource %s: %v\n", target, err)
 			return match
@@ -200,16 +181,13 @@ func inlineResources(htmlPath string, content string) string {
 			return match
 		}
 		src := submatch[1]
-		if strings.HasPrefix(src, "data:") {
+		if strings.HasPrefix(src, "data:") || isRemote(src) {
 			return match
 		}
 
-		target := src
-		if !isRemote(src) {
-			target = filepath.Join(baseDir, src)
-		}
+		target := filepath.Join(baseDir, src)
 
-		resContent, err := fetchResource(target)
+		resContent, err := os.ReadFile(target)
 		if err != nil {
 			log.Printf("Warning: Failed to fetch image resource %s: %v\n", target, err)
 			return match

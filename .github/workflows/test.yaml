@@ -23,11 +23,34 @@ jobs:
         with:
           version: v2.10.1
       - run: make test
+      - if: success() || failure()
+        run: | 
+          go run ./cmd/foolhtml /tmp/output.html build/reports
+      - uses: actions/upload-artifact@v7
+        if: success() || failure()
+        with:
+          name: foolhtml
+          archive: false
+          path: /tmp/output.html
+      - uses: actions/github-script@v6
+      - env:
+        ARTIFACT_URL: ${{ steps.upload-artifact.outputs.artifact-url }}
+      - with:
+        script: |
+          const artifactUrl = process.env.ARTIFACT_URL;
+          const commentBody = `You can see [ci-reports](${artifactUrl}) here.`;
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: commentBody,
+          });
+
       - name: Test Report Summary
         if: success() || failure()
         uses: dorny/test-reporter@v2
         with:
           name: test-report
-          path: "build/reports.xml"
+          path: "build/reports/test-reports.xml"
           reporter: java-junit
       - uses: k1LoW/octocov-action@v1

@@ -1,0 +1,57 @@
+name: foolhtml
+description: Combine multiple files into a single portable HTML file using foolhtml
+author: masaya
+
+inputs:
+  output:
+    description: Output HTML file path
+    required: true
+  inputs:
+    description: Newline-separated list of input files or directories
+    required: true
+  version:
+    description: foolhtml version to use (e.g. v0.0.5)
+    required: false
+    default: latest
+  github-token:
+    description: GitHub token for API requests to avoid rate limiting
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install foolhtml
+      shell: bash
+      env:
+        VERSION: ${{ inputs.version }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        set -e
+        OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+        ARCH=$(uname -m)
+        case "$ARCH" in
+          x86_64) ARCH=amd64 ;;
+          aarch64|arm64) ARCH=arm64 ;;
+        esac
+
+        if [ "$VERSION" = "latest" ]; then
+          VERSION=$(curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/repos/wreulicke/foolhtml/releases/latest | jq -r .tag_name)
+        fi
+        VERSION_NUM="${VERSION#v}"
+
+        ASSET="foolhtml_${VERSION_NUM}_${OS}_${ARCH}"
+        curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" "https://github.com/wreulicke/foolhtml/releases/download/${VERSION}/${ASSET}" -o /usr/local/bin/foolhtml
+        chmod +x /usr/local/bin/foolhtml
+    - name: Run foolhtml
+      shell: bash
+      env:
+        OUTPUT: ${{ inputs.output }}
+        INPUTS: ${{ inputs.inputs }}
+      run: |
+        INPUT_ARGS=$(echo "$INPUTS" | tr '\n' ' ')
+        foolhtml "$OUTPUT" $INPUT_ARGS
+
+branding:
+  icon: file-text
+  color: orange

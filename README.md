@@ -19,11 +19,104 @@
 
 ## Installation
 
-Ensure you have Go installed on your system, then build the binary:
+Download the latest binary from the [GitHub Releases](https://github.com/wreulicke/foolhtml/releases/latest) page.
+
+### macOS
 
 ```bash
-go build -o foolhtml main.go
+# Apple Silicon (arm64)
+VERSION=$(curl -s https://api.github.com/repos/wreulicke/foolhtml/releases/latest | grep tag_name | cut -d '"' -f 4)
+curl -L "https://github.com/wreulicke/foolhtml/releases/download/${VERSION}/foolhtml_${VERSION#v}_darwin_arm64" -o foolhtml
+chmod +x foolhtml && mv foolhtml /usr/local/bin/foolhtml
+
+# Intel (amd64)
+VERSION=$(curl -s https://api.github.com/repos/wreulicke/foolhtml/releases/latest | grep tag_name | cut -d '"' -f 4)
+curl -L "https://github.com/wreulicke/foolhtml/releases/download/${VERSION}/foolhtml_${VERSION#v}_darwin_amd64" -o foolhtml
+chmod +x foolhtml && mv foolhtml /usr/local/bin/foolhtml
 ```
+
+### Linux
+
+```bash
+# amd64
+VERSION=$(curl -s https://api.github.com/repos/wreulicke/foolhtml/releases/latest | grep tag_name | cut -d '"' -f 4)
+curl -L "https://github.com/wreulicke/foolhtml/releases/download/${VERSION}/foolhtml_${VERSION#v}_linux_amd64" -o foolhtml
+chmod +x foolhtml && mv foolhtml /usr/local/bin/foolhtml
+
+# arm64
+VERSION=$(curl -s https://api.github.com/repos/wreulicke/foolhtml/releases/latest | grep tag_name | cut -d '"' -f 4)
+curl -L "https://github.com/wreulicke/foolhtml/releases/download/${VERSION}/foolhtml_${VERSION#v}_linux_arm64" -o foolhtml
+chmod +x foolhtml && mv foolhtml /usr/local/bin/foolhtml
+```
+
+### Windows
+
+```bash
+# amd64
+VERSION=$(curl -s https://api.github.com/repos/wreulicke/foolhtml/releases/latest | grep tag_name | cut -d '"' -f 4)
+curl -L "https://github.com/wreulicke/foolhtml/releases/download/${VERSION}/foolhtml_${VERSION#v}_windows_amd64.exe" -o foolhtml.exe
+
+# arm64
+VERSION=$(curl -s https://api.github.com/repos/wreulicke/foolhtml/releases/latest | grep tag_name | cut -d '"' -f 4)
+curl -L "https://github.com/wreulicke/foolhtml/releases/download/${VERSION}/foolhtml_${VERSION#v}_windows_arm64.exe" -o foolhtml.exe
+```
+
+### Docker
+
+```bash
+docker run --rm -v $(pwd):/work ghcr.io/wreulicke/foolhtml output.html input/
+```
+
+### GitHub Actions
+
+Use the `wreulicke/foolhtml` action in your workflow. The following example generates a combined HTML report and uploads it as a workflow artifact. On pull requests, a comment with the artifact URL is posted automatically.
+You can see artifacts by just clicking the link.
+
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: wreulicke/foolhtml@main
+        with:
+          output: /tmp/output.html
+          inputs: |
+            path/to/file1.html
+            path/to/dir/
+
+      - uses: actions/upload-artifact@v7
+        id: upload-artifact
+        with:
+          name: report
+          archive: false
+          path: /tmp/output.html
+      
+      - uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        env:
+          ARTIFACT_URL: ${{ steps.upload-artifact.outputs.artifact-url }}
+        with:
+          script: |
+            const artifactUrl = process.env.ARTIFACT_URL;
+            const commentBody = `You can see [ci-reports](${artifactUrl}) here.`;
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody,
+            });
+```
+
+Available inputs:
+
+| Input          | Description                                      | Required | Default               |
+|----------------|--------------------------------------------------|----------|-----------------------|
+| `output`       | Output HTML file path                            | Yes      |                       |
+| `inputs`       | Newline-separated list of input files/directories | Yes      |                       |
+| `version`      | foolhtml version to use (e.g. `v0.0.6`)          | No       | `latest`              |
+| `github-token` | GitHub token to avoid API rate limiting          | No       | `${{ github.token }}` |
 
 ## Usage
 

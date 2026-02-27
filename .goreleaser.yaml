@@ -20,11 +20,7 @@ archives:
 snapshot:
   version_template: master
 changelog:
-  sort: asc
-  filters:
-    exclude:
-      - "Merge pull request"
-      - "Merge branch"
+  disable: true
 release:
   github:
     owner: wreulicke

@@ -4,17 +4,50 @@ import (
 	_ "embed"
 
 	"bytes"
+	"debug/buildinfo"
 	"encoding/base64"
 	"fmt"
 	"html"
 	"html/template"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/spf13/cobra"
 )
+
+func mainInternal() error {
+	//nolint:wrapcheck
+	return NewApp().Execute()
+}
+
+func main() {
+	err := mainInternal()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func NewApp() *cobra.Command {
+	c := cobra.Command{
+		Use:   "foolhtml",
+		Short: "foolhtml",
+		Args:  cobra.ArbitraryArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(args)
+		},
+	}
+
+	c.AddCommand(
+		NewVersionCommand(),
+	)
+
+	return &c
+}
 
 // FileContent holds the name and escaped HTML content of a file.
 type FileContent struct {
@@ -117,28 +150,27 @@ func inlineResources(htmlPath string, content string) string {
 	return content
 }
 
-func main() {
-	if len(os.Args) < 3 {
-		fmt.Printf("Usage: %s <output_file.html> <input_path1> [input_path2...]\n", os.Args[0])
-		os.Exit(1)
+func run(args []string) error {
+	if len(args) < 2 {
+		return fmt.Errorf("expect 2 args or higher")
 	}
 
-	outputFileName := os.Args[1]
-	inputFileNames := os.Args[2:]
+	outputFileName := args[0]
+	inputFileNames := args[1:]
 
 	// Determine the common root directory to create relative paths for the tree
 	var commonRoot string
 
 	absPath, err := filepath.Abs(inputFileNames[0])
 	if err != nil {
-		log.Fatalf("Failed to get absolute path: %v", err)
+		return fmt.Errorf("Failed to get absolute path: %v", err)
 	}
 	commonRoot = filepath.Dir(absPath)
 
 	for _, name := range inputFileNames[1:] {
 		absPath, err := filepath.Abs(name)
 		if err != nil {
-			log.Fatalf("Failed to get absolute path: %v", err)
+			return fmt.Errorf("Failed to get absolute path: %w", err)
 		}
 		dir := filepath.Dir(absPath)
 		for !strings.HasPrefix(commonRoot, dir) && commonRoot != "." && commonRoot != "/" {
@@ -154,8 +186,7 @@ func main() {
 	for _, name := range inputFileNames {
 		info, err := os.Stat(name)
 		if err != nil {
-			log.Printf("Error stating %s: %v\n", name, err)
-			continue
+			return fmt.Errorf("Error stating %s: %v\n", name, err)
 		}
 
 		if info.IsDir() {
@@ -173,7 +204,7 @@ func main() {
 				return nil
 			})
 			if err != nil {
-				log.Printf("Error walking directory %s: %v\n", name, err)
+				return fmt.Errorf("Error walking directory %s: %v\n", name, err)
 			}
 		} else {
 			targetFiles = append(targetFiles, name)
@@ -183,8 +214,7 @@ func main() {
 	for _, inputFileName := range targetFiles {
 		contentBytes, err := os.ReadFile(inputFileName)
 		if err != nil {
-			log.Printf("Error reading file %s: %v\n", inputFileName, err)
-			continue
+			return fmt.Errorf("Error reading file %s: %w", inputFileName, err)
 		}
 
 		contentType := http.DetectContentType(contentBytes)
@@ -204,8 +234,7 @@ func main() {
 		// Escape for srcdoc
 		relPath, err := filepath.Rel(commonRoot, inputFileName)
 		if err != nil {
-			log.Printf("Warning: could not find relative path for %s: %v", inputFileName, err)
-			relPath = filepath.Base(inputFileName)
+			return fmt.Errorf("could not find relative path for %s: %w", inputFileName, err)
 		}
 
 		files = append(files, FileContent{
@@ -215,7 +244,7 @@ func main() {
 	}
 
 	if len(files) == 0 {
-		log.Fatal("No valid input files processed.")
+		return fmt.Errorf("No valid input files processed.")
 	}
 
 	data := TemplateData{
@@ -224,19 +253,59 @@ func main() {
 
 	tmpl, err := template.New("main").Parse(mainTemplate)
 	if err != nil {
-		log.Fatalf("Error parsing template: %v", err)
+		return fmt.Errorf("Error parsing template: %w", err)
 	}
 
 	var renderedHTML bytes.Buffer
 	err = tmpl.Execute(&renderedHTML, data)
 	if err != nil {
-		log.Fatalf("Error executing template: %v", err)
+		return fmt.Errorf("Error executing template: %w", err)
 	}
 
 	err = os.WriteFile(outputFileName, renderedHTML.Bytes(), 0644)
 	if err != nil {
-		log.Fatalf("Error writing output file %s: %v", outputFileName, err)
+		return fmt.Errorf("Error writing output file %s: %w", outputFileName, err)
 	}
 
 	fmt.Printf("Successfully combined %d files into %s\n", len(files), outputFileName)
+	return nil
+}
+
+func NewVersionCommand() *cobra.Command {
+	var detail bool
+
+	c := &cobra.Command{
+		Use:   "version",
+		Short: "show version",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return version(cmd.OutOrStdout(), detail)
+		},
+	}
+	c.Flags().BoolVarP(&detail, "detail", "d", false, "show details")
+
+	return c
+}
+
+func version(w io.Writer, detail bool) error {
+	path, err := os.Executable()
+	if err != nil {
+		return fmt.Errorf("cannot get executable path: %w", err)
+	}
+
+	info, err := buildinfo.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("cannot read buildinfo: %w", err)
+	}
+
+	fmt.Fprintf(w, "go version: %s\n", info.GoVersion)
+	fmt.Fprintf(w, "path: %s\n", info.Path)
+	fmt.Fprintf(w, "mod: %s\n", info.Main.Path)
+	fmt.Fprintf(w, "module version: %s\n", info.Main.Version)
+
+	if detail {
+		fmt.Fprintln(w)
+		fmt.Fprintln(w, info)
+	}
+
+	return nil
 }

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": "Makefile",
+      "depNameTemplate": "{{depName}}",
+      "datasourceTemplate": "{{datasource}}",
+      "matchStrings": [
+        ":=v?(?<currentValue>[0-9]+\\.[0-9]+\\.[0-9]+)\\s+# renovate: datasource=(?<datasource>[^ ]+) depName=(?<depName>[^\\n]+)"
+      ]
+    }
+  ],
+  "packageRules": [
+    {
+      "matchDatasources": ["golang-version"],
+      "rangeStrategy": "bump"
+    }
+  ]
+}

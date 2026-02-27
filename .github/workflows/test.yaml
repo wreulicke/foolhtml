@@ -24,8 +24,10 @@ jobs:
           version: v2.10.1
       - run: make test
       - if: success() || failure()
-        run: | 
-          go run ./cmd/foolhtml /tmp/output.html build/reports
+        uses: ./
+        with:
+          output: /tmp/output.html
+          inputs: build/report
       - uses: actions/upload-artifact@v7
         if: success() || failure()
         id: upload-artifact

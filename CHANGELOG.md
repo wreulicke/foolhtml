@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.0.5](https://github.com/wreulicke/foolhtml/compare/v0.0.4...v0.0.5) - 2026-02-27
+- add comment when only pull_request by @wreulicke in https://github.com/wreulicke/foolhtml/pull/8
+- fix container image build by @wreulicke in https://github.com/wreulicke/foolhtml/pull/10
+
 ## [v0.0.4](https://github.com/wreulicke/foolhtml/compare/v0.0.3...v0.0.4) - 2026-02-27
 - Integration test by @wreulicke in https://github.com/wreulicke/foolhtml/pull/5
 - add push:true by @wreulicke in https://github.com/wreulicke/foolhtml/pull/7

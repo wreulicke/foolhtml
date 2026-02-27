@@ -46,7 +46,7 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
           flavor:
-            latest
+            latest=true
 
       - uses: docker/build-push-action@v6
         with:

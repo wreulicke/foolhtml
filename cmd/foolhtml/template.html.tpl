@@ -79,14 +79,31 @@
         .tree-children.collapsed { display: none; }
         #content-viewer { flex-grow: 1; }
         iframe { width: 100%; height: 100%; border: none; display: block; }
+        #download {
+            position: fixed;
+            right: 18px;
+            top: 18px;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            background: hsl(189, 73%, 64%);
+            border: 0px;
+            border-radius: 9999px;
+            cursor: pointer;
+        }
+        #download:hover {
+            background: hsl(189, 73%, 64%, 0.7);
+            border: 1px solid;
+            border-color: hsl(189, 7%, 26%, 0.3);
+        }
     </style>
 </head>
 <body>
     <div id="sidebar">
         <div id="sidebar-header">Explorer</div>
-        <button id="download">Download</button>
         <div id="file-tree"></div>
     </div>
+    <button id="download">⬇️</button>
     <div id="content-viewer">
         <iframe id="content-frame" sandbox="allow-scripts allow-same-origin"></iframe>
     </div>

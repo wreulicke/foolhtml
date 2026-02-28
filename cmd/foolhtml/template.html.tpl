@@ -84,6 +84,7 @@
 <body>
     <div id="sidebar">
         <div id="sidebar-header">Explorer</div>
+        <button id="download">Download</button>
         <div id="file-tree"></div>
     </div>
     <div id="content-viewer">
@@ -92,9 +93,13 @@
     <script>
         const files = [
             {{range $i, $f := .Files}}
-            { path: "{{$f.Name}}", html: "{{$f.RawContent}}" },
+            { path: "{{$f.Path}}", name: "{{$f.Name}}", base64: "{{ $f.Base64 }}", html: "{{ $f.PreviewContent }}" },
             {{end}}
         ];
+        console.log(files)
+        try {
+            console.log(atob(files[0].base64))
+        } catch (e) {}
 
         const EXT_ICONS = {
             html: ['\u{1F310}', '#e44d26'], htm:  ['\u{1F310}', '#e44d26'],
@@ -130,6 +135,7 @@
         let activeRow = null;
         const frame = document.getElementById('content-frame');
 
+        let openFile = null;
         function renderNode(node, depth) {
             const frag = document.createDocumentFragment();
 
@@ -190,6 +196,7 @@
                     if (activeRow) activeRow.classList.remove('active');
                     row.classList.add('active');
                     activeRow = row;
+                    openFile = file;
                     frame.srcdoc = file.html;
                 });
 
@@ -198,6 +205,17 @@
 
             return frag;
         }
+        const dEl = document.getElementById('download')
+        dEl.addEventListener('click', (e) => {
+            const d = atob(openFile.base64);
+            const array = new Uint8Array(Array.prototype.map.call(d, c => c.charCodeAt()))
+            const blob = new Blob([array], {type: "application/octet-stream"})
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement("a");
+            a.href = url;
+            a.download = openFile.name;
+            a.click();
+        })
 
         const treeEl = document.getElementById('file-tree');
         treeEl.appendChild(renderNode(buildTree(files), 0));

@@ -51,9 +51,11 @@ func NewApp() *cobra.Command {
 
 // FileContent holds the name and escaped HTML content of a file.
 type FileContent struct {
-	Name       string
-	RawContent string
-	JSSafeHTML string
+	Path           string
+	Name           string
+	ContentType    string
+	Base64         string
+	PreviewContent string
 }
 
 // TemplateData for the HTML template.
@@ -256,9 +258,14 @@ func run(args []string) error {
 			return fmt.Errorf("could not find relative path for %s: %w", inputFileName, err)
 		}
 
+		e := base64.StdEncoding.EncodeToString(contentBytes)
+
 		files = append(files, FileContent{
-			Name:       relPath,
-			RawContent: processedContent,
+			Path:           relPath,
+			Name:           filepath.Base(relPath),
+			ContentType:    contentType,
+			Base64:         e,
+			PreviewContent: processedContent,
 		})
 	}
 	if len(files) == 0 {

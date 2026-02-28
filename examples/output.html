@@ -84,6 +84,7 @@
 <body>
     <div id="sidebar">
         <div id="sidebar-header">Explorer</div>
+        <button id="download">Download</button>
         <div id="file-tree"></div>
     </div>
     <div id="content-viewer">
@@ -92,17 +93,21 @@
     <script>
         const files = [
             
-            { path: "testdata\/file1.html", html: "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n    \u003ctitle\u003eFile 1 (Gopher PNG Test)\u003c\/title\u003e\n    \u003clink rel=\u0022stylesheet\u0022 href=\u0022https:\/\/cdnjs.cloudflare.com\/ajax\/libs\/mocha\/10.2.0\/mocha.min.css\u0022\u003e\n    \u003cstyle\u003ebody {\n    background-color: #ffe0e0;\n    border: 5px solid red;\n}\nh1 {\n    text-shadow: 2px 2px #ccc;\n}\u003c\/style\u003e\n\u003c\/head\u003e\n\u003cbody\u003e\n    \u003ch1\u003eThis is File 1 with a PNG Gopher!\u003c\/h1\u003e\n    \u003cp\u003eContent of the first HTML file.\u003c\/p\u003e\n    \u003cimg src=\u0022https:\/\/go.dev\/images\/favicon-gopher-plain.png\u0022 alt=\u0022Go Gopher PNG\u0022\u003e\n    \u003cscript\u003econsole.log(\u0022Inlined script is running!\u0022);\ndocument.addEventListener(\u0022DOMContentLoaded\u0022, function() {\n    const p = document.createElement(\u0022p\u0022);\n    p.textContent = \u0022This paragraph was added by an inlined script.\u0022;\n    p.style.fontWeight = \u0022bold\u0022;\n    document.body.appendChild(p);\n});\u003c\/script\u003e\n\u003c\/body\u003e\n\u003c\/html\u003e" },
+            { path: "testdata\/file1.html", name: "file1.html", base64: "PCFET0NUWVBFIGh0bWw\u002bCjxodG1sPgo8aGVhZD4KICAgIDx0aXRsZT5GaWxlIDEgKEdvcGhlciBQTkcgVGVzdCk8L3RpdGxlPgogICAgPGxpbmsgcmVsPSJzdHlsZXNoZWV0IiBocmVmPSJodHRwczovL2NkbmpzLmNsb3VkZmxhcmUuY29tL2FqYXgvbGlicy9tb2NoYS8xMC4yLjAvbW9jaGEubWluLmNzcyI\u002bCiAgICA8bGluayByZWw9InN0eWxlc2hlZXQiIGhyZWY9InN0eWxlLmNzcyI\u002bCjwvaGVhZD4KPGJvZHk\u002bCiAgICA8aDE\u002bVGhpcyBpcyBGaWxlIDEgd2l0aCBhIFBORyBHb3BoZXIhPC9oMT4KICAgIDxwPkNvbnRlbnQgb2YgdGhlIGZpcnN0IEhUTUwgZmlsZS48L3A\u002bCiAgICA8aW1nIHNyYz0iaHR0cHM6Ly9nby5kZXYvaW1hZ2VzL2Zhdmljb24tZ29waGVyLXBsYWluLnBuZyIgYWx0PSJHbyBHb3BoZXIgUE5HIj4KICAgIDxzY3JpcHQgc3JjPSJzY3JpcHQuanMiPjwvc2NyaXB0Pgo8L2JvZHk\u002bCjwvaHRtbD4=", html: "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n    \u003ctitle\u003eFile 1 (Gopher PNG Test)\u003c\/title\u003e\n    \u003clink rel=\u0022stylesheet\u0022 href=\u0022https:\/\/cdnjs.cloudflare.com\/ajax\/libs\/mocha\/10.2.0\/mocha.min.css\u0022\u003e\n    \u003cstyle\u003ebody {\n    background-color: #ffe0e0;\n    border: 5px solid red;\n}\nh1 {\n    text-shadow: 2px 2px #ccc;\n}\u003c\/style\u003e\n\u003c\/head\u003e\n\u003cbody\u003e\n    \u003ch1\u003eThis is File 1 with a PNG Gopher!\u003c\/h1\u003e\n    \u003cp\u003eContent of the first HTML file.\u003c\/p\u003e\n    \u003cimg src=\u0022https:\/\/go.dev\/images\/favicon-gopher-plain.png\u0022 alt=\u0022Go Gopher PNG\u0022\u003e\n    \u003cscript\u003econsole.log(\u0022Inlined script is running!\u0022);\ndocument.addEventListener(\u0022DOMContentLoaded\u0022, function() {\n    const p = document.createElement(\u0022p\u0022);\n    p.textContent = \u0022This paragraph was added by an inlined script.\u0022;\n    p.style.fontWeight = \u0022bold\u0022;\n    document.body.appendChild(p);\n});\u003c\/script\u003e\n\u003c\/body\u003e\n\u003c\/html\u003e" },
             
-            { path: "testdata\/file2.html", html: "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n    \u003ctitle\u003eFile 2\u003c\/title\u003e\n    \u003cstyle\u003e\n        body { font-family: serif; background-color: #e0e0e0; padding: 20px; }\n        h1 { color: #007bff; }\n        p { color: #555; }\n    \u003c\/style\u003e\n\u003c\/head\u003e\n\u003cbody\u003e\n    \u003ch1\u003eThis is File 2 with a PNG Gopher!\u003c\/h1\u003e\n    \u003cp\u003eContent of the second HTML file.\u003c\/p\u003e\n    \u003cimg src=\u0022https:\/\/go.dev\/images\/favicon-gopher-plain.png\u0022 alt=\u0022Go Gopher PNG\u0022\u003e\n\u003c\/body\u003e\n\u003c\/html\u003e" },
+            { path: "testdata\/file2.html", name: "file2.html", base64: "PCFET0NUWVBFIGh0bWw\u002bCjxodG1sPgo8aGVhZD4KICAgIDx0aXRsZT5GaWxlIDI8L3RpdGxlPgogICAgPHN0eWxlPgogICAgICAgIGJvZHkgeyBmb250LWZhbWlseTogc2VyaWY7IGJhY2tncm91bmQtY29sb3I6ICNlMGUwZTA7IHBhZGRpbmc6IDIwcHg7IH0KICAgICAgICBoMSB7IGNvbG9yOiAjMDA3YmZmOyB9CiAgICAgICAgcCB7IGNvbG9yOiAjNTU1OyB9CiAgICA8L3N0eWxlPgo8L2hlYWQ\u002bCjxib2R5PgogICAgPGgxPlRoaXMgaXMgRmlsZSAyIHdpdGggYSBQTkcgR29waGVyITwvaDE\u002bCiAgICA8cD5Db250ZW50IG9mIHRoZSBzZWNvbmQgSFRNTCBmaWxlLjwvcD4KICAgIDxpbWcgc3JjPSJodHRwczovL2dvLmRldi9pbWFnZXMvZmF2aWNvbi1nb3BoZXItcGxhaW4ucG5nIiBhbHQ9IkdvIEdvcGhlciBQTkciPgo8L2JvZHk\u002bCjwvaHRtbD4=", html: "\u003c!DOCTYPE html\u003e\n\u003chtml\u003e\n\u003chead\u003e\n    \u003ctitle\u003eFile 2\u003c\/title\u003e\n    \u003cstyle\u003e\n        body { font-family: serif; background-color: #e0e0e0; padding: 20px; }\n        h1 { color: #007bff; }\n        p { color: #555; }\n    \u003c\/style\u003e\n\u003c\/head\u003e\n\u003cbody\u003e\n    \u003ch1\u003eThis is File 2 with a PNG Gopher!\u003c\/h1\u003e\n    \u003cp\u003eContent of the second HTML file.\u003c\/p\u003e\n    \u003cimg src=\u0022https:\/\/go.dev\/images\/favicon-gopher-plain.png\u0022 alt=\u0022Go Gopher PNG\u0022\u003e\n\u003c\/body\u003e\n\u003c\/html\u003e" },
             
-            { path: "testdata\/nested\/test.txt", html: "\u003c!DOCTYPE html\u003e\u003chtml\u003e\u003chead\u003e\u003cmeta charset=\u0022UTF-8\u0022\u003e\u003c\/head\u003e\u003cbody style=\u0022margin:0;padding:10px;\u0022\u003e\u003cpre style=\u0022white-space: pre-wrap; word-wrap: break-word; font-family: monospace;\u0022\u003etest\u003c\/pre\u003e\u003c\/body\u003e\u003c\/html\u003e" },
+            { path: "testdata\/nested\/test.txt", name: "test.txt", base64: "dGVzdA==", html: "\u003c!DOCTYPE html\u003e\u003chtml\u003e\u003chead\u003e\u003cmeta charset=\u0022UTF-8\u0022\u003e\u003c\/head\u003e\u003cbody style=\u0022margin:0;padding:10px;\u0022\u003e\u003cpre style=\u0022white-space: pre-wrap; word-wrap: break-word; font-family: monospace;\u0022\u003etest\u003c\/pre\u003e\u003c\/body\u003e\u003c\/html\u003e" },
             
-            { path: "testdata\/script.js", html: "\u003c!DOCTYPE html\u003e\u003chtml\u003e\u003chead\u003e\u003cmeta charset=\u0022UTF-8\u0022\u003e\u003c\/head\u003e\u003cbody style=\u0022margin:0;padding:10px;\u0022\u003e\u003cpre style=\u0022white-space: pre-wrap; word-wrap: break-word; font-family: monospace;\u0022\u003econsole.log(\u0026#34;Inlined script is running!\u0026#34;);\ndocument.addEventListener(\u0026#34;DOMContentLoaded\u0026#34;, function() {\n    const p = document.createElement(\u0026#34;p\u0026#34;);\n    p.textContent = \u0026#34;This paragraph was added by an inlined script.\u0026#34;;\n    p.style.fontWeight = \u0026#34;bold\u0026#34;;\n    document.body.appendChild(p);\n});\u003c\/pre\u003e\u003c\/body\u003e\u003c\/html\u003e" },
+            { path: "testdata\/script.js", name: "script.js", base64: "Y29uc29sZS5sb2coIklubGluZWQgc2NyaXB0IGlzIHJ1bm5pbmchIik7CmRvY3VtZW50LmFkZEV2ZW50TGlzdGVuZXIoIkRPTUNvbnRlbnRMb2FkZWQiLCBmdW5jdGlvbigpIHsKICAgIGNvbnN0IHAgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCJwIik7CiAgICBwLnRleHRDb250ZW50ID0gIlRoaXMgcGFyYWdyYXBoIHdhcyBhZGRlZCBieSBhbiBpbmxpbmVkIHNjcmlwdC4iOwogICAgcC5zdHlsZS5mb250V2VpZ2h0ID0gImJvbGQiOwogICAgZG9jdW1lbnQuYm9keS5hcHBlbmRDaGlsZChwKTsKfSk7", html: "\u003c!DOCTYPE html\u003e\u003chtml\u003e\u003chead\u003e\u003cmeta charset=\u0022UTF-8\u0022\u003e\u003c\/head\u003e\u003cbody style=\u0022margin:0;padding:10px;\u0022\u003e\u003cpre style=\u0022white-space: pre-wrap; word-wrap: break-word; font-family: monospace;\u0022\u003econsole.log(\u0026#34;Inlined script is running!\u0026#34;);\ndocument.addEventListener(\u0026#34;DOMContentLoaded\u0026#34;, function() {\n    const p = document.createElement(\u0026#34;p\u0026#34;);\n    p.textContent = \u0026#34;This paragraph was added by an inlined script.\u0026#34;;\n    p.style.fontWeight = \u0026#34;bold\u0026#34;;\n    document.body.appendChild(p);\n});\u003c\/pre\u003e\u003c\/body\u003e\u003c\/html\u003e" },
             
-            { path: "testdata\/style.css", html: "\u003c!DOCTYPE html\u003e\u003chtml\u003e\u003chead\u003e\u003cmeta charset=\u0022UTF-8\u0022\u003e\u003c\/head\u003e\u003cbody style=\u0022margin:0;padding:10px;\u0022\u003e\u003cpre style=\u0022white-space: pre-wrap; word-wrap: break-word; font-family: monospace;\u0022\u003ebody {\n    background-color: #ffe0e0;\n    border: 5px solid red;\n}\nh1 {\n    text-shadow: 2px 2px #ccc;\n}\u003c\/pre\u003e\u003c\/body\u003e\u003c\/html\u003e" },
+            { path: "testdata\/style.css", name: "style.css", base64: "Ym9keSB7CiAgICBiYWNrZ3JvdW5kLWNvbG9yOiAjZmZlMGUwOwogICAgYm9yZGVyOiA1cHggc29saWQgcmVkOwp9CmgxIHsKICAgIHRleHQtc2hhZG93OiAycHggMnB4ICNjY2M7Cn0=", html: "\u003c!DOCTYPE html\u003e\u003chtml\u003e\u003chead\u003e\u003cmeta charset=\u0022UTF-8\u0022\u003e\u003c\/head\u003e\u003cbody style=\u0022margin:0;padding:10px;\u0022\u003e\u003cpre style=\u0022white-space: pre-wrap; word-wrap: break-word; font-family: monospace;\u0022\u003ebody {\n    background-color: #ffe0e0;\n    border: 5px solid red;\n}\nh1 {\n    text-shadow: 2px 2px #ccc;\n}\u003c\/pre\u003e\u003c\/body\u003e\u003c\/html\u003e" },
             
         ];
+        console.log(files)
+        try {
+            console.log(atob(files[0].base64))
+        } catch (e) {}
 
         const EXT_ICONS = {
             html: ['\u{1F310}', '#e44d26'], htm:  ['\u{1F310}', '#e44d26'],
@@ -138,6 +143,7 @@
         let activeRow = null;
         const frame = document.getElementById('content-frame');
 
+        let openFile = null;
         function renderNode(node, depth) {
             const frag = document.createDocumentFragment();
 
@@ -198,6 +204,7 @@
                     if (activeRow) activeRow.classList.remove('active');
                     row.classList.add('active');
                     activeRow = row;
+                    openFile = file;
                     frame.srcdoc = file.html;
                 });
 
@@ -206,6 +213,17 @@
 
             return frag;
         }
+        const dEl = document.getElementById('download')
+        dEl.addEventListener('click', (e) => {
+            const d = atob(openFile.base64);
+            const array = new Uint8Array(Array.prototype.map.call(d, c => c.charCodeAt()))
+            const blob = new Blob([array], {type: "application/octet-stream"})
+            var url = window.URL.createObjectURL(blob);
+            var a = document.createElement("a");
+            a.href = url;
+            a.download = openFile.name;
+            a.click();
+        })
 
         const treeEl = document.getElementById('file-tree');
         treeEl.appendChild(renderNode(buildTree(files), 0));

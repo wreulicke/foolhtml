@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.0.8](https://github.com/wreulicke/foolhtml/compare/v0.0.7...v0.0.8) - 2026-02-28
+- change button position by @wreulicke in https://github.com/wreulicke/foolhtml/pull/16
+- Use go-test-report by @wreulicke in https://github.com/wreulicke/foolhtml/pull/18
+
 ## [v0.0.7](https://github.com/wreulicke/foolhtml/compare/v0.0.6...v0.0.7) - 2026-02-28
 - update readme by @wreulicke in https://github.com/wreulicke/foolhtml/pull/13
 - enable to download content by @wreulicke in https://github.com/wreulicke/foolhtml/pull/15

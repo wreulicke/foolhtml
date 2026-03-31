@@ -71,4 +71,5 @@
 [tagpr]
 	vPrefix = true
 	releaseBranch = master
-	versionFile = -
+	versionFile = action.yaml
+	release = draft

@@ -72,3 +72,4 @@
 	vPrefix = true
 	releaseBranch = master
 	versionFile = -
+	release = draft

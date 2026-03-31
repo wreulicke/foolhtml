@@ -13,6 +13,10 @@ inputs:
     description: foolhtml version to use
     required: false
     default: v0.0.8
+  skip-install:
+    description: Skip installation of foolhtml (assumes it's already installed)
+    required: false
+    default: "false"
   github-token:
     description: GitHub token for API requests to avoid rate limiting
     required: false
@@ -22,6 +26,7 @@ runs:
   using: composite
   steps:
     - name: Install foolhtml
+      if: ${{ inputs.skip-install != 'true' }}
       shell: bash
       env:
         VERSION: ${{ inputs.version }}
@@ -46,8 +51,7 @@ runs:
         OUTPUT: ${{ inputs.output }}
         INPUTS: ${{ inputs.inputs }}
       run: |
-        INPUT_ARGS=$(echo "$INPUTS" | tr '\n' ' ')
-        foolhtml "$OUTPUT" $INPUT_ARGS
+        foolhtml -o "$OUTPUT" -i "$INPUTS"
 
 branding:
   icon: file-text

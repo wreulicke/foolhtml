@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"debug/buildinfo"
 	_ "embed"
@@ -33,14 +34,18 @@ func main() {
 }
 
 func NewApp() *cobra.Command {
+	var output string
+	var input string
 	c := cobra.Command{
 		Use:   "foolhtml",
 		Short: "foolhtml",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(args)
+			return run(output, input)
 		},
 	}
+	c.Flags().StringVarP(&output, "output", "o", "", "output HTML file name")
+	c.Flags().StringVarP(&input, "input", "i", "", "input file or directory (can specify multiple)")
 
 	c.AddCommand(
 		NewVersionCommand(),
@@ -160,25 +165,50 @@ func inlineResources(htmlPath, content string) string {
 	return content
 }
 
-func run(args []string) error {
-	if len(args) < 2 {
-		return errors.New("expect 2 args or higher")
+func splitInput(input string) ([]string, error) {
+	// Split by comma and trim spaces
+	r := []string{}
+	s := bufio.NewScanner(strings.NewReader(input))
+	for s.Scan() {
+		line := s.Text()
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		sp := strings.SplitSeq(line, ",")
+		for part := range sp {
+			part = strings.TrimSpace(part)
+			if part != "" {
+				r = append(r, part)
+			}
+		}
 	}
+	err := s.Err()
+	if err != nil {
+		return nil, fmt.Errorf("error scanning input: %w", err)
+	}
+	return r, nil
+}
 
-	outputFileName := args[0]
-	inputFileNames := args[1:]
+func run(output, input string) error {
+	inputs, err := splitInput(input)
+	if err != nil {
+		return fmt.Errorf("failed to split input: %w", err)
+	}
+	if len(inputs) < 1 {
+		return errors.New("expect at least 1 input")
+	}
 
 	// Determine the common root directory to create relative paths for the tree
 	var commonRoot string
 
-	absPath, err := filepath.Abs(inputFileNames[0])
+	absPath, err := filepath.Abs(inputs[0])
 	if err != nil {
 		return fmt.Errorf("failed to get absolute path: %w", err)
 	}
 
 	commonRoot = filepath.Dir(absPath)
 
-	for _, name := range inputFileNames[1:] {
+	for _, name := range inputs[1:] {
 		absPath, err := filepath.Abs(name)
 		if err != nil {
 			return fmt.Errorf("failed to get absolute path: %w", err)
@@ -198,7 +228,7 @@ func run(args []string) error {
 		targetFiles []string
 	)
 
-	for _, name := range inputFileNames {
+	for _, name := range inputs {
 		info, err := os.Stat(name)
 		if err != nil {
 			return fmt.Errorf("error stating %s: %w", name, err)
@@ -288,12 +318,12 @@ func run(args []string) error {
 		return fmt.Errorf("error executing template: %w", err)
 	}
 
-	err = os.WriteFile(outputFileName, renderedHTML.Bytes(), 0o644) //nolint:gosec
+	err = os.WriteFile(output, renderedHTML.Bytes(), 0o644) //nolint:gosec
 	if err != nil {
-		return fmt.Errorf("error writing output file %s: %w", outputFileName, err)
+		return fmt.Errorf("error writing output file %s: %w", output, err)
 	}
 
-	log.Printf("Successfully combined %d files into %s\n", len(files), outputFileName)
+	log.Printf("Successfully combined %d files into %s\n", len(files), output)
 
 	return nil
 }

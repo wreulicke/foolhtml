@@ -64,7 +64,7 @@ curl -L "https://github.com/wreulicke/foolhtml/releases/download/${VERSION}/fool
 ### Docker
 
 ```bash
-docker run --rm -v $(pwd):/work ghcr.io/wreulicke/foolhtml output.html input/
+docker run --rm -v $(pwd):/work ghcr.io/wreulicke/foolhtml -o output.html -i input/
 ```
 
 ### GitHub Actions
@@ -121,13 +121,13 @@ Available inputs:
 ## Usage
 
 ```bash
-./foolhtml <output_file.html> <input_path1> [input_path2...]
+./foolhtml -o <output_file.html> -i <input_path1>,<input_path2>...
 ```
 
 ### Example
 
 ```bash
-./foolhtml examples/output.html test_files/
+./foolhtml -o examples/output.html -i test_files/
 ```
 
 This will create `examples/output.html` containing all files found in `test_files/`, with each accessible via a tab.

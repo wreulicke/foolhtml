@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.0.9](https://github.com/wreulicke/foolhtml/compare/v0.0.8...v0.0.9) - 2026-03-31
+- Configure immutable release by @wreulicke in https://github.com/wreulicke/foolhtml/pull/19
+- tweak by @wreulicke in https://github.com/wreulicke/foolhtml/pull/21
+
 ## [v0.0.8](https://github.com/wreulicke/foolhtml/compare/v0.0.7...v0.0.8) - 2026-02-28
 - change button position by @wreulicke in https://github.com/wreulicke/foolhtml/pull/16
 - Use go-test-report by @wreulicke in https://github.com/wreulicke/foolhtml/pull/18
